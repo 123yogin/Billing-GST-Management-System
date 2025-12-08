@@ -38,5 +38,13 @@ export const createInstallments = (dealId, data) => api.post(`/deals/${dealId}/i
 export const addPayment = (dealId, data) => api.post(`/deals/${dealId}/payments`, data)
 export const getDealLedger = (dealId) => api.get(`/deals/${dealId}/ledger`)
 
+// Dealers
+export const getDealers = () => api.get('/dealers')
+export const createDealer = (data) => api.post('/dealers', data)
+export const getDealer = (dealerId) => api.get(`/dealers/${dealerId}`)
+export const updateDealer = (dealerId, data) => api.put(`/dealers/${dealerId}`, data)
+export const deleteDealer = (dealerId) => api.delete(`/dealers/${dealerId}`)
+
 export default api
+
 

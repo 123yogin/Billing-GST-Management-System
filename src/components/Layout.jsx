@@ -12,8 +12,9 @@ function Layout({ children }) {
     { path: '/dealer-bill/create', label: 'Create Dealer Bill', icon: '📋' },
     { path: '/bills', label: 'View Bills', icon: '📑' },
     { path: '/deal/create', label: 'Create Deal', icon: '💰' },
-    { path: '/deals', label: 'View Deals', icon: '📊' },
-    { path: '/reports', label: 'Reports', icon: '📈' },
+    { path: '/deals', label: 'View Deals', icon: '📈' },
+    { path: '/dealers', label: 'Dealers', icon: '👥' },
+    { path: '/reports', label: 'Reports', icon: '📊' },
   ]
 
   const isActive = (path) => {
@@ -23,11 +24,17 @@ function Layout({ children }) {
     return location.pathname.startsWith(path)
   }
 
+  // Get page title based on current route
+  const getPageTitle = () => {
+    const currentItem = menuItems.find(item => isActive(item.path))
+    return currentItem ? currentItem.label : 'Billing System'
+  }
+
   return (
     <div className="layout-container">
       {/* Mobile Header */}
       <header className="mobile-header">
-        <button 
+        <button
           className="menu-toggle"
           onClick={() => setSidebarOpen(!sidebarOpen)}
           aria-label="Toggle menu"
@@ -45,7 +52,7 @@ function Layout({ children }) {
           <h2 className="sidebar-logo">Billing System</h2>
           <p className="sidebar-subtitle">GST Management</p>
         </div>
-        
+
         <nav className="sidebar-nav">
           {menuItems.map((item) => (
             <Link
@@ -63,16 +70,40 @@ function Layout({ children }) {
 
       {/* Overlay for mobile */}
       {sidebarOpen && (
-        <div 
+        <div
           className="sidebar-overlay"
           onClick={() => setSidebarOpen(false)}
         ></div>
       )}
 
       {/* Main Content */}
-      <main className="main-content">
-        {children}
-      </main>
+      <div className="main-content">
+        {/* Top Header - Desktop */}
+        <header className="top-header">
+          <h1 className="header-title">{getPageTitle()}</h1>
+
+          <div className="header-actions">
+            <button className="header-icon-btn" title="Notifications">
+              🔔
+            </button>
+            <button className="header-icon-btn" title="Settings">
+              ⚙️
+            </button>
+            <div className="user-info">
+              <div className="user-details">
+                <p className="user-name">Admin</p>
+                <p className="user-role">Administrator</p>
+              </div>
+              <div className="user-avatar">A</div>
+            </div>
+          </div>
+        </header>
+
+        {/* Page Content */}
+        <main style={{ flex: 1, padding: '24px 32px' }}>
+          {children}
+        </main>
+      </div>
     </div>
   )
 }

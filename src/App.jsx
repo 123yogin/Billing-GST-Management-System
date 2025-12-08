@@ -10,6 +10,8 @@ import Reports from './pages/Reports'
 import CreateDeal from './pages/CreateDeal'
 import DealsList from './pages/DealsList'
 import DealDetails from './pages/DealDetails'
+import Dealers from './pages/Dealers'
+
 
 function App() {
   return (
@@ -26,6 +28,7 @@ function App() {
           <Route path="/deal/create" element={<CreateDeal />} />
           <Route path="/deals" element={<DealsList />} />
           <Route path="/deal/:id/details" element={<DealDetails />} />
+          <Route path="/dealers" element={<Dealers />} />
         </Routes>
       </Layout>
     </Router>
