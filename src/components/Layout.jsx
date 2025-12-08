@@ -11,6 +11,8 @@ function Layout({ children }) {
     { path: '/farmer-bill/create', label: 'Create Farmer Bill', icon: '📄' },
     { path: '/dealer-bill/create', label: 'Create Dealer Bill', icon: '📋' },
     { path: '/bills', label: 'View Bills', icon: '📑' },
+    { path: '/deal/create', label: 'Create Deal', icon: '💰' },
+    { path: '/deals', label: 'View Deals', icon: '📊' },
     { path: '/reports', label: 'Reports', icon: '📈' },
   ]
 

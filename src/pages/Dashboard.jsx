@@ -37,7 +37,21 @@ function Dashboard() {
     },
     {
       id: 4,
+      icon: '💰',
+      title: 'Create Deal',
+      description: 'Create a new loan/deal with interest',
+      path: '/deal/create'
+    },
+    {
+      id: 5,
       icon: '📊',
+      title: 'View Deals',
+      description: 'Manage deals and payments',
+      path: '/deals'
+    },
+    {
+      id: 6,
+      icon: '📈',
       title: 'Reports',
       description: 'Download monthly reports',
       path: '/reports'
@@ -52,7 +66,7 @@ function Dashboard() {
     <div className="dashboard-page">
       <div className="dashboard-header">
         <h1>Billing & GST Management System</h1>
-        <p>Manage your farmer and dealer bills efficiently</p>
+        <p>Manage your bills, deals, and interest calculations</p>
       </div>
 
       <div className="dashboard-cards">
