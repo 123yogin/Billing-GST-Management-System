@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BillItemRow from '../components/BillItemRow'
-import { createDealerBill } from '../services/api'
+import { createDealerBill, getDealer } from '../services/api'
 import '../styles/BillForm.css'
 
 function CreateDealerBill() {
@@ -30,6 +30,33 @@ function CreateDealerBill() {
     grandTotal: 0
   })
   const [loading, setLoading] = useState(false)
+  const [fetchDealerId, setFetchDealerId] = useState('')
+
+  const handleFetchDealer = async () => {
+    if (!fetchDealerId) {
+      alert('Please enter a Dealer ID')
+      return
+    }
+
+    try {
+      setLoading(true)
+      const response = await getDealer(fetchDealerId)
+      const dealer = response.data
+
+      setFormData(prev => ({
+        ...prev,
+        customer_name: dealer.name || '',
+        receiver_address: dealer.address || '',
+        receiver_gstin: dealer.gstin || ''
+      }))
+      alert('Dealer details fetched successfully!')
+    } catch (error) {
+      console.error(error)
+      alert('Error fetching dealer: ' + (error.response?.data?.error || 'Dealer not found'))
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // Auto-calculate totals
   useEffect(() => {
@@ -191,6 +218,34 @@ function CreateDealerBill() {
             {/* Receiver Details */}
             <div className="border-top p-3">
               <h6 className="text-decoration-underline mb-3">Details of Receiver (Billed to)</h6>
+
+              {/* Dealer Fetch Row */}
+              <div className="row mb-3 align-items-center">
+                <label className="col-sm-2 col-form-label">Search Dealer ID:</label>
+                <div className="col-sm-4">
+                  <div className="input-group input-group-sm">
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Enter Dealer ID"
+                      value={fetchDealerId}
+                      onChange={(e) => setFetchDealerId(e.target.value)}
+                    />
+                    <button
+                      className="btn btn-outline-primary"
+                      type="button"
+                      onClick={handleFetchDealer}
+                      disabled={loading}
+                    >
+                      Fetch
+                    </button>
+                  </div>
+                </div>
+                <div className="col-sm-6">
+                  <small className="text-muted">Enter ID to auto-fill details</small>
+                </div>
+              </div>
+
               <div className="row mb-2">
                 <label className="col-sm-2 col-form-label">Name:</label>
                 <div className="col-sm-10">
