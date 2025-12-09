@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { createDeal } from '../services/api'
+import { createDeal, getDealers } from '../services/api'
+import SearchableDropdown from '../components/SearchableDropdown'
 import '../styles/BillForm.css'
 
 function CreateDeal() {
@@ -12,11 +13,25 @@ function CreateDeal() {
     deal_date: new Date().toISOString().split('T')[0],
     installments: []
   })
+  const [dealersList, setDealersList] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [installmentCount, setInstallmentCount] = useState(0)
   const [installmentAmount, setInstallmentAmount] = useState('')
   const [installmentInterval, setInstallmentInterval] = useState(30) // days
+
+  useEffect(() => {
+    loadDealers()
+  }, [])
+
+  const loadDealers = async () => {
+    try {
+      const response = await getDealers()
+      setDealersList(response.data)
+    } catch (error) {
+      console.error("Failed to load dealers", error)
+    }
+  }
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -43,7 +58,7 @@ function CreateDeal() {
     for (let i = 0; i < installmentCount; i++) {
       const dueDate = new Date(startDate)
       dueDate.setDate(dueDate.getDate() + (i + 1) * installmentInterval)
-      
+
       installments.push({
         due_date: dueDate.toISOString().split('T')[0],
         amount: perInstallment
@@ -99,13 +114,13 @@ function CreateDeal() {
           <div className="form-row">
             <div className="form-group">
               <label>Customer Name *</label>
-              <input
-                type="text"
-                name="customer_name"
-                value={formData.customer_name}
-                onChange={handleInputChange}
-                required
-                className="form-control"
+              <SearchableDropdown
+                options={dealersList}
+                label="name"
+                id="customer_name"
+                selectedVal={formData.customer_name}
+                placeholder="Select or type dealer name..."
+                handleChange={(val) => setFormData({ ...formData, customer_name: val })}
               />
             </div>
             <div className="form-group">

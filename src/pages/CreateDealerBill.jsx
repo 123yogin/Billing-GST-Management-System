@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BillItemRow from '../components/BillItemRow'
-import { createDealerBill, getDealer } from '../services/api'
+import SearchableDropdown from '../components/SearchableDropdown'
+import { createDealerBill, getDealer, getDealers } from '../services/api'
 import '../styles/BillForm.css'
 
 function CreateDealerBill() {
@@ -31,6 +32,20 @@ function CreateDealerBill() {
   })
   const [loading, setLoading] = useState(false)
   const [fetchDealerId, setFetchDealerId] = useState('')
+  const [dealersList, setDealersList] = useState([])
+
+  useEffect(() => {
+    loadDealers()
+  }, [])
+
+  const loadDealers = async () => {
+    try {
+      const response = await getDealers()
+      setDealersList(response.data)
+    } catch (error) {
+      console.error("Failed to load dealers", error)
+    }
+  }
 
   const handleFetchDealer = async () => {
     if (!fetchDealerId) {
@@ -49,7 +64,7 @@ function CreateDealerBill() {
         receiver_address: dealer.address || '',
         receiver_gstin: dealer.gstin || ''
       }))
-      alert('Dealer details fetched successfully!')
+      // Removed alert per request
     } catch (error) {
       console.error(error)
       alert('Error fetching dealer: ' + (error.response?.data?.error || 'Dealer not found'))
@@ -249,12 +264,28 @@ function CreateDealerBill() {
               <div className="row mb-2">
                 <label className="col-sm-2 col-form-label">Name:</label>
                 <div className="col-sm-10">
-                  <input
-                    type="text"
-                    className="form-control form-control-sm"
-                    value={formData.customer_name}
-                    onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
-                    required
+                  <SearchableDropdown
+                    options={dealersList}
+                    label="name"
+                    id="customer_name"
+                    selectedVal={formData.customer_name}
+                    placeholder="Select or type dealer name..."
+                    handleChange={(val) => {
+                      const dealer = dealersList.find(d => d.name === val)
+                      setFormData(prev => ({
+                        ...prev,
+                        customer_name: val,
+                        ...(dealer && {
+                          receiver_address: dealer.address || '',
+                          receiver_gstin: dealer.gstin || '',
+                        })
+                      }))
+
+                      // Auto-populate Dealer ID field
+                      if (dealer && dealer.dealer_id) {
+                        setFetchDealerId(dealer.dealer_id)
+                      }
+                    }}
                   />
                 </div>
               </div>
