@@ -9,7 +9,6 @@ function AddDealer() {
     name: '',
     phone: '',
     address: '',
-    khata_no: '',
     gstin: ''
   })
   const [error, setError] = useState('')
@@ -101,18 +100,7 @@ function AddDealer() {
               </div>
             </div>
             <div className="row">
-              <div className="col-md-6">
-                <div className="form-group mb-3">
-                  <label>Khata Number</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    name="khata_no"
-                    value={formData.khata_no}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
+
               <div className="col-md-6">
                 <div className="form-group mb-3">
                   <label>GSTIN</label>
@@ -127,16 +115,16 @@ function AddDealer() {
               </div>
             </div>
             <div className="d-flex gap-2">
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 className="btn btn-primary"
                 disabled={loading}
               >
                 {loading ? 'Creating...' : 'Create Dealer'}
               </button>
-              <button 
-                type="button" 
-                className="btn btn-secondary" 
+              <button
+                type="button"
+                className="btn btn-secondary"
                 onClick={handleCancel}
                 disabled={loading}
               >

@@ -9,10 +9,18 @@ function CreateDealerBill() {
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     customer_name: '',
+    receiver_address: '',
+    receiver_state: 'Gujarat',
+    receiver_state_code: '24',
+    receiver_gstin: '',
+    transport_mode: '',
+    vehicle_number: '',
+    supply_date: new Date().toISOString().split('T')[0],
+    place_of_supply: '',
     other_expense: 0,
     discount: 0,
     gst_percentage: 18,
-    items: [{ item: '', weight: 0, price: 0, item_total: 0 }]
+    items: [{ item: '', hsn_code: '', quantity_bags: 0, weight: 0, price: 0, item_total: 0 }]
   })
   const [calculations, setCalculations] = useState({
     subTotal: 0,
@@ -30,7 +38,7 @@ function CreateDealerBill() {
       const itemTotal = (item.weight || 0) * (item.price || 0)
       itemsTotal += itemTotal
     })
-    
+
     const subTotal = itemsTotal + (parseFloat(formData.other_expense) || 0) - (parseFloat(formData.discount) || 0)
     const gstPercentage = parseFloat(formData.gst_percentage) || 18
     const gstAmount = (subTotal * gstPercentage) / 100
@@ -50,7 +58,7 @@ function CreateDealerBill() {
   const handleItemUpdate = (index, updatedItem) => {
     const itemTotal = (updatedItem.weight || 0) * (updatedItem.price || 0)
     updatedItem.item_total = itemTotal
-    
+
     const newItems = [...formData.items]
     newItems[index] = updatedItem
     setFormData({ ...formData, items: newItems })
@@ -59,14 +67,14 @@ function CreateDealerBill() {
   const handleAddItem = () => {
     setFormData({
       ...formData,
-      items: [...formData.items, { item: '', weight: 0, price: 0, item_total: 0 }]
+      items: [...formData.items, { item: '', hsn_code: '', quantity_bags: 0, weight: 0, price: 0, item_total: 0 }]
     })
   }
 
   const handleDeleteItem = (index) => {
     const newItems = formData.items.filter((_, i) => i !== index)
     if (newItems.length === 0) {
-      newItems.push({ item: '', weight: 0, price: 0, item_total: 0 })
+      newItems.push({ item: '', hsn_code: '', quantity_bags: 0, weight: 0, price: 0, item_total: 0 })
     }
     setFormData({ ...formData, items: newItems })
   }
@@ -74,7 +82,7 @@ function CreateDealerBill() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
-    
+
     try {
       const response = await createDealerBill(formData)
       alert('Bill created successfully!')
@@ -89,57 +97,182 @@ function CreateDealerBill() {
   return (
     <div className="bill-form-page">
       <div className="page-header">
-        <h1>Create Dealer Bill</h1>
+        <h1>Create Tax Invoice</h1>
       </div>
 
       <form onSubmit={handleSubmit}>
+        {/* Invoice Header Section */}
         <div className="card form-section">
-          <div className="card-header">
-            <h3>Bill Information</h3>
+          <div className="card-header bg-warning text-dark">
+            <h3 className="mb-0 text-center">KHUSHBU ENTERPRISE</h3>
+            <p className="text-center mb-0 small">Add: Kungher-Patan Road, At & Po. Kungher, Ta. & Dist. Patan (N.G.) 384265</p>
           </div>
-          <div className="card-body">
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">Date</label>
-                <input
-                  type="date"
-                  className="form-control"
-                  value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  required
-                />
+          <div className="card-body p-0">
+            <div className="row g-0">
+              {/* Left Column */}
+              <div className="col-md-6 border-end p-3">
+                <div className="mb-2"><strong>GSTIN NO.:</strong> 24AAQFK3998K1ZI</div>
+                <div className="row mb-2">
+                  <label className="col-sm-4 col-form-label">Invoice No.:</label>
+                  <div className="col-sm-8">
+                    <input type="text" className="form-control form-control-sm" placeholder="Auto Generated" disabled />
+                  </div>
+                </div>
+                <div className="row mb-2">
+                  <label className="col-sm-4 col-form-label">Invoice Date:</label>
+                  <div className="col-sm-8">
+                    <input
+                      type="date"
+                      className="form-control form-control-sm"
+                      value={formData.date}
+                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="row mb-2">
+                  <label className="col-sm-4 col-form-label">State:</label>
+                  <div className="col-sm-8 d-flex gap-2">
+                    <input type="text" className="form-control form-control-sm" value="Gujarat" readOnly />
+                    <input type="text" className="form-control form-control-sm" placeholder="Code No." value="24" readOnly />
+                  </div>
+                </div>
               </div>
-              <div className="form-group">
-                <label className="form-label">Customer Name</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={formData.customer_name}
-                  onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
-                  required
-                />
+
+              {/* Right Column */}
+              <div className="col-md-6 p-3">
+                <div className="row mb-2">
+                  <label className="col-sm-5 col-form-label">Transportation Mode:</label>
+                  <div className="col-sm-7">
+                    <input
+                      type="text"
+                      className="form-control form-control-sm"
+                      value={formData.transport_mode}
+                      onChange={(e) => setFormData({ ...formData, transport_mode: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="row mb-2">
+                  <label className="col-sm-5 col-form-label">Vehicle Number:</label>
+                  <div className="col-sm-7">
+                    <input
+                      type="text"
+                      className="form-control form-control-sm"
+                      value={formData.vehicle_number}
+                      onChange={(e) => setFormData({ ...formData, vehicle_number: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="row mb-2">
+                  <label className="col-sm-5 col-form-label">Date of Supply:</label>
+                  <div className="col-sm-7">
+                    <input
+                      type="date"
+                      className="form-control form-control-sm"
+                      value={formData.supply_date}
+                      onChange={(e) => setFormData({ ...formData, supply_date: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="row mb-2">
+                  <label className="col-sm-5 col-form-label">Place of Supply:</label>
+                  <div className="col-sm-7">
+                    <input
+                      type="text"
+                      className="form-control form-control-sm"
+                      value={formData.place_of_supply}
+                      onChange={(e) => setFormData({ ...formData, place_of_supply: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Receiver Details */}
+            <div className="border-top p-3">
+              <h6 className="text-decoration-underline mb-3">Details of Receiver (Billed to)</h6>
+              <div className="row mb-2">
+                <label className="col-sm-2 col-form-label">Name:</label>
+                <div className="col-sm-10">
+                  <input
+                    type="text"
+                    className="form-control form-control-sm"
+                    value={formData.customer_name}
+                    onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="row mb-2">
+                <label className="col-sm-2 col-form-label">Address:</label>
+                <div className="col-sm-10">
+                  <textarea
+                    className="form-control form-control-sm"
+                    rows="2"
+                    value={formData.receiver_address}
+                    onChange={(e) => setFormData({ ...formData, receiver_address: e.target.value })}
+                  ></textarea>
+                </div>
+              </div>
+              <div className="row mb-2">
+                <div className="col-md-6 d-flex align-items-center">
+                  <label className="col-sm-4 col-form-label">State:</label>
+                  <div className="col-sm-8">
+                    <input
+                      type="text"
+                      className="form-control form-control-sm"
+                      value={formData.receiver_state}
+                      onChange={(e) => setFormData({ ...formData, receiver_state: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="col-md-6 d-flex align-items-center">
+                  <label className="col-sm-4 col-form-label">State Code:</label>
+                  <div className="col-sm-8">
+                    <input
+                      type="text"
+                      className="form-control form-control-sm"
+                      value={formData.receiver_state_code}
+                      onChange={(e) => setFormData({ ...formData, receiver_state_code: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="row mb-2">
+                <label className="col-sm-2 col-form-label">GSTIN:</label>
+                <div className="col-sm-10">
+                  <input
+                    type="text"
+                    className="form-control form-control-sm"
+                    value={formData.receiver_gstin}
+                    onChange={(e) => setFormData({ ...formData, receiver_gstin: e.target.value })}
+                  />
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="card form-section">
-          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        {/* Items Table */}
+        <div className="card form-section mt-3">
+          <div className="card-header d-flex justify-content-between align-items-center">
             <h3>Items</h3>
             <button type="button" className="btn btn-sm btn-primary" onClick={handleAddItem}>
               Add Item
             </button>
           </div>
-          <div className="card-body">
-            <div className="table-wrapper">
-              <table className="table">
-                <thead>
+          <div className="card-body p-0">
+            <div className="table-responsive">
+              <table className="table table-bordered mb-0">
+                <thead className="table-light">
                   <tr>
-                    <th>Item</th>
-                    <th>Weight</th>
-                    <th>Price</th>
-                    <th className="text-end">Item Total</th>
-                    <th>Action</th>
+                    <th>Name of Goods / Service</th>
+                    <th style={{ width: '100px' }}>HSN Code</th>
+                    <th style={{ width: '80px' }}>Bags</th>
+                    <th style={{ width: '100px' }}>Net Kg.</th>
+                    <th style={{ width: '100px' }}>Rate</th>
+                    <th className="text-end" style={{ width: '120px' }}>Amount</th>
+                    <th style={{ width: '50px' }}></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -158,105 +291,52 @@ function CreateDealerBill() {
           </div>
         </div>
 
-        <div className="card form-section">
-          <div className="card-header">
-            <h3>Totals & GST</h3>
-          </div>
+        {/* Bottom Section */}
+        <div className="card form-section mt-3">
           <div className="card-body">
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">Other Expense</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  value={formData.other_expense}
-                  onChange={(e) => setFormData({ ...formData, other_expense: parseFloat(e.target.value) || 0 })}
-                  step="0.01"
-                  min="0"
-                />
+            <div className="row">
+              <div className="col-md-6">
+                <h6>Bank Details:</h6>
+                <p className="mb-1"><strong>A/c Name:</strong> KHUSHBU ENTERPRISE</p>
+                <p className="mb-1"><strong>Bank Name:</strong> THE SARDARGUNJ MERCANTILE CO-OP. BANK LTD.</p>
+                <p className="mb-1"><strong>A/c Number:</strong> 00211101003889</p>
+                <p className="mb-0"><strong>IFSC Code:</strong> GSCB0USMCB1</p>
               </div>
-              <div className="form-group">
-                <label className="form-label">Discount</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  value={formData.discount}
-                  onChange={(e) => setFormData({ ...formData, discount: parseFloat(e.target.value) || 0 })}
-                  step="0.01"
-                  min="0"
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">GST Percentage</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  value={formData.gst_percentage}
-                  onChange={(e) => setFormData({ ...formData, gst_percentage: parseFloat(e.target.value) || 18 })}
-                  step="0.01"
-                  min="0"
-                  max="100"
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Sub Total</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={`₹${calculations.subTotal.toFixed(2)}`}
-                  readOnly
-                  style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">GST Amount</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={`₹${calculations.gstAmount.toFixed(2)}`}
-                  readOnly
-                  style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">CGST</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={`₹${calculations.cgst.toFixed(2)}`}
-                  readOnly
-                  style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">SGST</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={`₹${calculations.sgst.toFixed(2)}`}
-                  readOnly
-                  style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Grand Total</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={`₹${calculations.grandTotal.toFixed(2)}`}
-                  readOnly
-                  style={{ fontWeight: 'bold', fontSize: '1.2rem', backgroundColor: 'var(--color-bg-tertiary)' }}
-                />
+              <div className="col-md-6">
+                <div className="row mb-2">
+                  <label className="col-sm-6 col-form-label">Sub Total</label>
+                  <div className="col-sm-6">
+                    <input type="text" className="form-control form-control-sm text-end" value={calculations.subTotal.toFixed(2)} readOnly />
+                  </div>
+                </div>
+                <div className="row mb-2">
+                  <label className="col-sm-6 col-form-label">CGST ({formData.gst_percentage / 2}%)</label>
+                  <div className="col-sm-6">
+                    <input type="text" className="form-control form-control-sm text-end" value={calculations.cgst.toFixed(2)} readOnly />
+                  </div>
+                </div>
+                <div className="row mb-2">
+                  <label className="col-sm-6 col-form-label">SGST ({formData.gst_percentage / 2}%)</label>
+                  <div className="col-sm-6">
+                    <input type="text" className="form-control form-control-sm text-end" value={calculations.sgst.toFixed(2)} readOnly />
+                  </div>
+                </div>
+                <div className="row mb-2">
+                  <label className="col-sm-6 col-form-label fw-bold">Total</label>
+                  <div className="col-sm-6">
+                    <input type="text" className="form-control form-control-sm text-end fw-bold" value={calculations.grandTotal.toFixed(2)} readOnly />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="action-buttons">
-          <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? 'Saving...' : 'Save Bill'}
+        <div className="action-buttons mt-4 mb-5">
+          <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
+            {loading ? 'Saving...' : 'Save & Print Invoice'}
           </button>
-          <button type="button" className="btn btn-outline-secondary" onClick={() => navigate('/')}>
+          <button type="button" className="btn btn-outline-secondary btn-lg" onClick={() => navigate('/')}>
             Cancel
           </button>
         </div>
@@ -266,4 +346,3 @@ function CreateDealerBill() {
 }
 
 export default CreateDealerBill
-

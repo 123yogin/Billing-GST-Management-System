@@ -17,6 +17,24 @@ function BillItemRow({ item, index, onUpdate, onDelete }) {
       </td>
       <td>
         <input
+          type="text"
+          className="form-control form-control-sm"
+          value={item.hsn_code || ''}
+          onChange={(e) => handleChange('hsn_code', e.target.value)}
+          placeholder="HSN"
+        />
+      </td>
+      <td>
+        <input
+          type="number"
+          className="form-control form-control-sm"
+          value={item.quantity_bags || ''}
+          onChange={(e) => handleChange('quantity_bags', parseInt(e.target.value) || 0)}
+          placeholder="0"
+        />
+      </td>
+      <td>
+        <input
           type="number"
           className="form-control form-control-sm"
           value={item.weight || ''}

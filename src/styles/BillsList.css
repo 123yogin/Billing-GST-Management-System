@@ -32,40 +32,20 @@
   box-shadow: var(--shadow-sm);
 }
 
-.filter-section h3 {
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 16px;
-}
-
-.filter-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.filter-actions {
+.filters-grid {
   display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-}
-
-/* Bill Form Styles */
-.bill-form {
-  background: var(--color-bg-primary);
-  padding: 24px;
-  border-radius: var(--radius-lg);
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
+  gap: 16px;
+  align-items: flex-end;
+  flex-wrap: wrap;
   margin-bottom: 20px;
 }
 
-.form-group label {
+.filter-group {
+  flex: 1;
+  min-width: 200px;
+}
+
+.filter-group label {
   font-size: 13px;
   font-weight: 500;
   color: var(--color-text-primary);
@@ -73,10 +53,37 @@
   display: block;
 }
 
-.form-group input,
-.form-group select,
-.form-group textarea {
+.filter-group input {
   width: 100%;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--color-border-light);
+  padding-bottom: 1px;
+}
+
+.tab-button {
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab-button:hover {
+  color: var(--color-primary);
+}
+
+.tab-button.active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
 }
 
 /* Table Container */
@@ -88,14 +95,20 @@
   box-shadow: var(--shadow-sm);
 }
 
+.table-wrapper {
+  overflow-x: auto;
+}
+
 /* Bills Table */
-.bills-table {
+.bills-table,
+.table {
   width: 100%;
   border-collapse: collapse;
   background: var(--color-bg-primary);
 }
 
-.bills-table thead th {
+.bills-table thead th,
+.table thead th {
   padding: 14px 16px;
   text-align: left;
   font-size: 12px;
@@ -108,7 +121,8 @@
   white-space: nowrap;
 }
 
-.bills-table tbody td {
+.bills-table tbody td,
+.table tbody td {
   padding: 14px 16px;
   border-bottom: 1px solid var(--color-border-light);
   font-size: 14px;
@@ -116,24 +130,25 @@
   vertical-align: middle;
 }
 
-.bills-table tbody tr:hover {
+.bills-table tbody tr:hover,
+.table tbody tr:hover {
   background-color: var(--color-bg-secondary);
 }
 
-.bills-table tbody tr:last-child td {
-  border-bottom: none;
+.text-end {
+  text-align: right;
 }
 
-/* Table Actions */
-.table-actions {
+/* Action Buttons */
+.action-buttons {
   display: flex;
   gap: 8px;
   align-items: center;
 }
 
-.table-actions .btn {
-  font-size: 13px;
-  padding: 6px 12px;
+.btn-sm {
+  padding: 4px 8px;
+  font-size: 12px;
 }
 
 /* Empty State */
@@ -143,57 +158,14 @@
   color: var(--color-text-secondary);
 }
 
-.empty-state-icon {
-  font-size: 64px;
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.empty-state h3 {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: var(--color-text-primary);
-}
-
-.empty-state p {
-  font-size: 14px;
-  color: var(--color-text-secondary);
-}
-
-/* Action Buttons Bar */
-.action-buttons {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  justify-content: flex-end;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-}
-
 /* Responsive */
 @media (max-width: 768px) {
-  .filter-row {
-    grid-template-columns: 1fr;
+  .filters-grid {
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-
-  .table-container {
-    overflow-x: auto;
-  }
-
-  .bills-table {
-    min-width: 800px;
-  }
-
-  .action-buttons {
-    justify-content: stretch;
-  }
-
-  .action-buttons .btn {
-    flex: 1;
+  .filter-group {
+    width: 100%;
   }
 }
