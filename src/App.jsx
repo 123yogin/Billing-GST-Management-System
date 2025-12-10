@@ -14,6 +14,8 @@ import PrintDealerBill from './pages/PrintDealerBill'
 import PrintFarmerBill from './pages/PrintFarmerBill'
 import Reports from './pages/Reports'
 
+import Items from './pages/Items'
+
 
 function App() {
   return (
@@ -32,6 +34,7 @@ function App() {
           <Route path="/deal/:id/details" element={<DealDetails />} />
           <Route path="/dealers" element={<Dealers />} />
           <Route path="/dealers/add" element={<AddDealer />} />
+          <Route path="/items" element={<Items />} />
           <Route path="/dealers/:id/edit" element={<EditDealer />} />
         </Routes>
       </Layout>

@@ -13,20 +13,20 @@ const api = axios.create({
 export const createFarmerBill = (data) => api.post('/farmer-bills', data)
 export const getFarmerBills = (params) => api.get('/farmer-bills', { params })
 export const getFarmerBill = (billId) => api.get(`/farmer-bills/${billId}`)
-export const downloadFarmerBillPDF = (billId) => 
+export const downloadFarmerBillPDF = (billId) =>
   api.get(`/farmer-bills/${billId}/pdf`, { responseType: 'blob' })
 
 // Dealer Bills
 export const createDealerBill = (data) => api.post('/dealer-bills', data)
 export const getDealerBills = (params) => api.get('/dealer-bills', { params })
 export const getDealerBill = (billId) => api.get(`/dealer-bills/${billId}`)
-export const downloadDealerBillPDF = (billId) => 
+export const downloadDealerBillPDF = (billId) =>
   api.get(`/dealer-bills/${billId}/pdf`, { responseType: 'blob' })
 
 // Reports
-export const downloadFarmerExcel = (params) => 
+export const downloadFarmerExcel = (params) =>
   api.get('/reports/farmer/excel', { params, responseType: 'blob' })
-export const downloadDealerExcel = (params) => 
+export const downloadDealerExcel = (params) =>
   api.get('/reports/dealer/excel', { params, responseType: 'blob' })
 
 // Deals (Interest Calculation)
@@ -44,6 +44,12 @@ export const createDealer = (data) => api.post('/dealers', data)
 export const getDealer = (dealerId) => api.get(`/dealers/${dealerId}`)
 export const updateDealer = (dealerId, data) => api.put(`/dealers/${dealerId}`, data)
 export const deleteDealer = (dealerId) => api.delete(`/dealers/${dealerId}`)
+
+// Items
+export const getItems = () => api.get('/items')
+export const createItem = (data) => api.post('/items', data)
+export const updateItem = (itemId, data) => api.put(`/items/${itemId}`, data)
+export const deleteItem = (itemId) => api.delete(`/items/${itemId}`)
 
 export default api
 
