@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import '../styles/SearchableDropdown.css';
 
 const SearchableDropdown = ({ options, label, id, selectedVal, handleChange, placeholder }) => {
     const [query, setQuery] = useState("");
     const [isOpen, setIsOpen] = useState(false);
+    const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
     const inputRef = useRef(null);
     const dropdownRef = useRef(null);
 
     useEffect(() => {
-        // Sync internal query with selectedVal if it changes externally
         if (selectedVal) {
             setQuery(selectedVal);
         } else if (selectedVal === '') {
@@ -17,12 +18,36 @@ const SearchableDropdown = ({ options, label, id, selectedVal, handleChange, pla
     }, [selectedVal]);
 
     useEffect(() => {
-        // Handle clicking outside to close
         document.addEventListener("mousedown", handleClickOutside);
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, []);
+
+    // Update coordinates when opening or resizing/scrolling
+    const updateCoords = () => {
+        if (inputRef.current) {
+            const rect = inputRef.current.getBoundingClientRect();
+            setCoords({
+                left: rect.left + window.scrollX,
+                top: rect.bottom + window.scrollY,
+                width: rect.width
+            });
+        }
+    };
+
+    useEffect(() => {
+        if (isOpen) {
+            updateCoords();
+            // Optional: update on scroll/resize to keep it attached
+            window.addEventListener('resize', updateCoords);
+            window.addEventListener('scroll', updateCoords, true);
+        }
+        return () => {
+            window.removeEventListener('resize', updateCoords);
+            window.removeEventListener('scroll', updateCoords, true);
+        };
+    }, [isOpen]);
 
     const handleClickOutside = (e) => {
         if (
@@ -45,13 +70,13 @@ const SearchableDropdown = ({ options, label, id, selectedVal, handleChange, pla
 
     const handleInputChange = (e) => {
         setQuery(e.target.value);
-        handleChange(e.target.value); // Determine if we want to pass raw text or wait for selection
+        handleChange(e.target.value);
         setIsOpen(true);
     };
 
     const handleSelect = (option) => {
         setQuery(option.name);
-        handleChange(option.name); // Pass selected name back to parent
+        handleChange(option.name);
         setIsOpen(false);
     };
 
@@ -67,18 +92,28 @@ const SearchableDropdown = ({ options, label, id, selectedVal, handleChange, pla
                     value={query}
                     className="form-control"
                     onChange={handleInputChange}
-                    onClick={() => setIsOpen(true)} // Open on click
+                    onClick={() => setIsOpen(true)}
                     placeholder={placeholder || "Search..."}
-                    autoComplete="new-password"
-                    list="autocompleteOff"
+                    autoComplete="off"
                 />
                 <label className="input-group-text bg-white border-start-0">
                     <i className="bi bi-chevron-down"></i>
                 </label>
             </div>
 
-            {isOpen && (
-                <ul className="dropdown-options" ref={dropdownRef}>
+            {isOpen && createPortal(
+                <ul
+                    className="dropdown-options"
+                    ref={dropdownRef}
+                    style={{
+                        position: 'absolute',
+                        left: coords.left,
+                        top: coords.top,
+                        width: coords.width,
+                        maxHeight: '200px',
+                        overflowY: 'auto'
+                    }}
+                >
                     {filtered.length > 0 ? (
                         filtered.map((option, index) => (
                             <li
@@ -93,7 +128,8 @@ const SearchableDropdown = ({ options, label, id, selectedVal, handleChange, pla
                     ) : (
                         <li className="dropdown-option no-results">No results found</li>
                     )}
-                </ul>
+                </ul>,
+                document.body
             )}
         </div>
     );

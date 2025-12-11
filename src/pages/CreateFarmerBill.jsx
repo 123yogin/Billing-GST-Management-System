@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BillItemRow from '../components/BillItemRow'
-import { createFarmerBill } from '../services/api'
+import { createFarmerBill, getItems } from '../services/api'
 import '../styles/BillForm.css'
 
 function CreateFarmerBill() {
@@ -23,6 +23,20 @@ function CreateFarmerBill() {
   })
   const [finalTotal, setFinalTotal] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [itemsList, setItemsList] = useState([])
+
+  useEffect(() => {
+    loadItems()
+  }, [])
+
+  const loadItems = async () => {
+    try {
+      const response = await getItems()
+      setItemsList(response.data)
+    } catch (error) {
+      console.error("Failed to load items", error)
+    }
+  }
 
   // Auto-calculate totals
   useEffect(() => {
@@ -264,6 +278,7 @@ function CreateFarmerBill() {
                       index={index}
                       onUpdate={handleItemUpdate}
                       onDelete={handleDeleteItem}
+                      itemsList={itemsList}
                     />
                   ))}
                 </tbody>

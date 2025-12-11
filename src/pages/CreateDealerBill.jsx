@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BillItemRow from '../components/BillItemRow'
 import SearchableDropdown from '../components/SearchableDropdown'
-import { createDealerBill, getDealer, getDealers } from '../services/api'
+import { createDealerBill, getDealer, getDealers, getItems } from '../services/api'
 import '../styles/BillForm.css'
 
 function CreateDealerBill() {
@@ -33,9 +33,11 @@ function CreateDealerBill() {
   const [loading, setLoading] = useState(false)
   const [fetchDealerId, setFetchDealerId] = useState('')
   const [dealersList, setDealersList] = useState([])
+  const [itemsList, setItemsList] = useState([])
 
   useEffect(() => {
     loadDealers()
+    loadItems()
   }, [])
 
   const loadDealers = async () => {
@@ -44,6 +46,15 @@ function CreateDealerBill() {
       setDealersList(response.data)
     } catch (error) {
       console.error("Failed to load dealers", error)
+    }
+  }
+
+  const loadItems = async () => {
+    try {
+      const response = await getItems()
+      setItemsList(response.data)
+    } catch (error) {
+      console.error("Failed to load items", error)
     }
   }
 
@@ -369,6 +380,7 @@ function CreateDealerBill() {
                       index={index}
                       onUpdate={handleItemUpdate}
                       onDelete={handleDeleteItem}
+                      itemsList={itemsList}
                     />
                   ))}
                 </tbody>

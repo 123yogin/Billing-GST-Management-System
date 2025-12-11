@@ -1,4 +1,20 @@
-function BillItemRow({ item, index, onUpdate, onDelete }) {
+import SearchableDropdown from './SearchableDropdown'
+
+function BillItemRow({ item, index, onUpdate, onDelete, itemsList }) {
+  const handleItemSelect = (val) => {
+    let updatedItem = { ...item, item: val }
+
+    // Auto-fill HSN code if item is found in the list
+    if (itemsList) {
+      const selectedItem = itemsList.find(i => i.name === val)
+      if (selectedItem) {
+        updatedItem.hsn_code = selectedItem.hsn_code || ''
+      }
+    }
+
+    onUpdate(index, updatedItem)
+  }
+
   const handleChange = (field, value) => {
     const updatedItem = { ...item, [field]: value }
     onUpdate(index, updatedItem)
@@ -7,11 +23,12 @@ function BillItemRow({ item, index, onUpdate, onDelete }) {
   return (
     <tr>
       <td>
-        <input
-          type="text"
-          className="form-control form-control-sm"
-          value={item.item || ''}
-          onChange={(e) => handleChange('item', e.target.value)}
+        <SearchableDropdown
+          options={itemsList || []}
+          label="name"
+          id={`item-name-${index}`}
+          selectedVal={item.item || ''}
+          handleChange={handleItemSelect}
           placeholder="Item name"
         />
       </td>
