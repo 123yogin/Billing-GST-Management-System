@@ -12,7 +12,13 @@ function DealDetails() {
   const [showPaymentForm, setShowPaymentForm] = useState(false)
   const [paymentData, setPaymentData] = useState({
     amount: '',
-    payment_date: new Date().toISOString().split('T')[0]
+    payment_date: (() => {
+      const istDate = new Date()
+      const istOffset = 5.5 * 60 * 60 * 1000
+      const utcTime = istDate.getTime() + (istDate.getTimezoneOffset() * 60 * 1000)
+      const istTime = new Date(utcTime + istOffset)
+      return istTime.toISOString().split('T')[0]
+    })()
   })
   const [processingPayment, setProcessingPayment] = useState(false)
   const [error, setError] = useState('')
@@ -46,7 +52,16 @@ function DealDetails() {
     try {
       await addPayment(id, paymentData)
       setShowPaymentForm(false)
-      setPaymentData({ amount: '', payment_date: new Date().toISOString().split('T')[0] })
+      setPaymentData({ 
+        amount: '', 
+        payment_date: (() => {
+          const istDate = new Date()
+          const istOffset = 5.5 * 60 * 60 * 1000
+          const utcTime = istDate.getTime() + (istDate.getTimezoneOffset() * 60 * 1000)
+          const istTime = new Date(utcTime + istOffset)
+          return istTime.toISOString().split('T')[0]
+        })()
+      })
       fetchDealDetails() // Refresh data
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to add payment')
@@ -56,7 +71,7 @@ function DealDetails() {
   }
 
   const calculateTotals = () => {
-    if (!deal) return { total: 0, paid: 0, pending: 0 }
+    if (!deal) return { total: 0, paid: 0, pending: 0, interestEarned: 0, accruedInterest: 0 }
     
     const total = parseFloat(deal.total_amount)
     const paid = deal.payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0)
@@ -64,12 +79,67 @@ function DealDetails() {
       .filter(inst => parseFloat(inst.pending_amount || 0) > 0)
       .reduce((sum, inst) => sum + parseFloat(inst.pending_amount || 0), 0)
     
+    // Calculate total interest earned from all payment allocations (realized interest)
+    const interestEarned = deal.payments.reduce((sum, payment) => {
+      if (payment.allocations && payment.allocations.length > 0) {
+        const paymentInterest = payment.allocations.reduce((allocSum, alloc) => {
+          return allocSum + parseFloat(alloc.interest_amount || 0)
+        }, 0)
+        return sum + paymentInterest
+      }
+      return sum
+    }, 0)
+    
+    // Get accrued interest on unpaid installments (from backend)
+    const accruedInterest = parseFloat(deal.accrued_interest || 0)
+    
     return {
       total,
       paid,
       pending: pendingInstallments,
-      totalPending: pendingInstallments
+      totalPending: pendingInstallments,
+      interestEarned,
+      accruedInterest
     }
+  }
+
+  const getPaymentInterest = (payment) => {
+    if (!payment.allocations || payment.allocations.length === 0) return 0
+    return payment.allocations.reduce((sum, alloc) => {
+      return sum + parseFloat(alloc.interest_amount || 0)
+    }, 0)
+  }
+
+  const getISTDate = () => {
+    // Get current date in IST (Indian Standard Time)
+    const now = new Date()
+    const istOffset = 5.5 * 60 * 60 * 1000 // IST is UTC+5:30
+    const utcTime = now.getTime() + (now.getTimezoneOffset() * 60 * 1000)
+    const istTime = new Date(utcTime + istOffset)
+    istTime.setHours(0, 0, 0, 0)
+    return istTime
+  }
+
+  const getBufferPeriodInfo = (dueDate) => {
+    if (!dueDate) return null
+    const due = new Date(dueDate)
+    const bufferStart = new Date(due)
+    const bufferEnd = new Date(due)
+    bufferEnd.setDate(bufferEnd.getDate() + 10)
+    const today = getISTDate()
+    
+    return {
+      start: bufferStart,
+      end: bufferEnd,
+      isInBuffer: today >= bufferStart && today <= bufferEnd,
+      isAfterBuffer: today > bufferEnd
+    }
+  }
+
+  const formatDate = (dateString) => {
+    // Format date in IST timezone
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })
   }
 
   if (loading) {
@@ -87,8 +157,18 @@ function DealDetails() {
       <div className="page-header">
         <div className="d-flex justify-content-between align-items-center">
           <div>
-            <h1>Deal Details: #{deal.deal_id}</h1>
-            <p>{deal.customer_name}</p>
+            <div className="d-flex align-items-center gap-3">
+              <h1>Deal Details: #{deal.deal_id}</h1>
+              <span className={`badge ${deal.status === 'closed' ? 'bg-success' : 'bg-primary'}`} style={{ fontSize: '1rem', padding: '0.5rem 1rem' }}>
+                {deal.status === 'closed' ? 'Closed' : 'Active'}
+              </span>
+            </div>
+            <p className="mb-0">{deal.customer_name}</p>
+            <p className="text-muted small mb-0">
+              Deal Date: {formatDate(deal.deal_date)} | 
+              Interest Rate: {parseFloat(deal.interest_percentage || 0).toFixed(2)}% | 
+              Buffer Period: 10 days after due date
+            </p>
           </div>
           <div>
             <button
@@ -97,15 +177,23 @@ function DealDetails() {
             >
               Back to List
             </button>
-            <button
-              className="btn btn-primary"
-              onClick={() => setShowPaymentForm(!showPaymentForm)}
-            >
-              {showPaymentForm ? 'Cancel' : '+ Add Payment'}
-            </button>
+            {deal.status !== 'closed' && (
+              <button
+                className="btn btn-primary"
+                onClick={() => setShowPaymentForm(!showPaymentForm)}
+              >
+                {showPaymentForm ? 'Cancel' : '+ Add Payment'}
+              </button>
+            )}
           </div>
         </div>
       </div>
+
+      {deal.status === 'closed' && (
+        <div className="alert alert-success" role="alert">
+          <strong>Deal Closed:</strong> This deal has been fully paid and is now closed. No further payments or interest accrual.
+        </div>
+      )}
 
       {error && (
         <div className="alert alert-danger" role="alert">
@@ -113,12 +201,30 @@ function DealDetails() {
         </div>
       )}
 
+      <div className="alert alert-info" role="alert">
+        <strong>Interest Calculation Rules:</strong>
+        <ul className="mb-0 mt-2">
+          <li>Interest accrues normally from deal date (or last payment date) until the due date</li>
+          <li>10-day buffer period after due date: No interest charged during this period</li>
+          <li>After buffer period: Interest resumes and the 10 buffer days are added to the interest calculation</li>
+          <li>When payment is made, interest is calculated only up to the payment date</li>
+          <li>After payment, interest on remaining balance is calculated from the payment date (not deal date)</li>
+          <li>Deal automatically closes when all installments are fully paid</li>
+        </ul>
+      </div>
+
       {showPaymentForm && (
         <div className="card mb-4">
           <div className="card-header">
             <h5>Add Payment</h5>
           </div>
           <div className="card-body">
+            <div className="alert alert-info mb-3">
+              <small>
+                <strong>Note:</strong> Interest will be calculated from the last payment date (or deal date) up to the payment date. 
+                If payment is made after the due date, buffer period rules apply.
+              </small>
+            </div>
             <form onSubmit={handlePaymentSubmit}>
               <div className="row">
                 <div className="col-md-6">
@@ -185,11 +291,30 @@ function DealDetails() {
             </div>
           </div>
         </div>
+        <div className="col-md-3">
+          <div className="card">
+            <div className="card-body">
+              <h6 className="card-subtitle mb-2 text-muted">Interest Earned</h6>
+              <h4 className="card-title text-info">₹{totals.interestEarned.toFixed(2)}</h4>
+              <small className="text-muted">From payments</small>
+            </div>
+          </div>
+        </div>
+        <div className="col-md-3">
+          <div className="card">
+            <div className="card-body">
+              <h6 className="card-subtitle mb-2 text-muted">Accrued Interest</h6>
+              <h4 className="card-title text-danger">₹{totals.accruedInterest.toFixed(2)}</h4>
+              <small className="text-muted">On pending amount</small>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="card">
         <div className="card-header">
           <h5>Installments</h5>
+          <small className="text-muted">Note: 10-day buffer period (no interest) applies after each due date</small>
         </div>
         <div className="card-body">
           <div className="table-responsive">
@@ -198,27 +323,57 @@ function DealDetails() {
                 <tr>
                   <th>#</th>
                   <th>Due Date</th>
+                  <th>Buffer Period</th>
                   <th>Days</th>
                   <th>Percentage (%)</th>
                   <th>Amount</th>
                   <th>Pending Amount</th>
+                  <th>Status</th>
                 </tr>
               </thead>
               <tbody>
-                {deal.installments.map((inst, idx) => (
-                  <tr key={inst.id}>
-                    <td>{idx + 1}</td>
-                    <td>{inst.due_date}</td>
-                    <td>{inst.days || 0}</td>
-                    <td>{parseFloat(inst.percentage || 0).toFixed(2)}%</td>
-                    <td>₹{parseFloat(inst.amount).toFixed(2)}</td>
-                    <td>
-                      <span className={`badge ${parseFloat(inst.pending_amount || 0) === 0 ? 'bg-success' : 'bg-warning'}`}>
-                        ₹{parseFloat(inst.pending_amount).toFixed(2)}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {deal.installments.map((inst, idx) => {
+                  const bufferInfo = getBufferPeriodInfo(inst.due_date)
+                  const isPaid = parseFloat(inst.pending_amount || 0) === 0
+                  return (
+                    <tr key={inst.id}>
+                      <td>{idx + 1}</td>
+                      <td>{formatDate(inst.due_date)}</td>
+                      <td>
+                        {bufferInfo && !isPaid ? (
+                          <div>
+                            <small className="text-muted">
+                              {formatDate(bufferInfo.start.toISOString().split('T')[0])} - {formatDate(bufferInfo.end.toISOString().split('T')[0])}
+                            </small>
+                            {bufferInfo.isInBuffer && (
+                              <span className="badge bg-info ms-2">In Buffer</span>
+                            )}
+                            {bufferInfo.isAfterBuffer && (
+                              <span className="badge bg-warning ms-2">Interest Resumed</span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-muted">-</span>
+                        )}
+                      </td>
+                      <td>{inst.days || 0}</td>
+                      <td>{parseFloat(inst.percentage || 0).toFixed(2)}%</td>
+                      <td>₹{parseFloat(inst.amount).toFixed(2)}</td>
+                      <td>
+                        <span className={`badge ${isPaid ? 'bg-success' : 'bg-warning'}`}>
+                          ₹{parseFloat(inst.pending_amount).toFixed(2)}
+                        </span>
+                      </td>
+                      <td>
+                        {isPaid ? (
+                          <span className="badge bg-success">Paid</span>
+                        ) : (
+                          <span className="badge bg-warning">Pending</span>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
@@ -236,6 +391,7 @@ function DealDetails() {
                 <tr>
                   <th>Date</th>
                   <th>Amount</th>
+                  <th>Interest Earned</th>
                   <th>Type</th>
                   <th>Remark</th>
                 </tr>
@@ -243,17 +399,27 @@ function DealDetails() {
               <tbody>
                 {deal.payments.length === 0 ? (
                   <tr>
-                    <td colSpan="4" className="text-center">No payments yet</td>
+                    <td colSpan="5" className="text-center">No payments yet</td>
                   </tr>
                 ) : (
-                  deal.payments.map((payment) => (
-                    <tr key={payment.id}>
-                      <td>{payment.payment_date}</td>
-                      <td>₹{parseFloat(payment.amount).toFixed(2)}</td>
-                      <td>{payment.type}</td>
-                      <td>{payment.remark || '-'}</td>
-                    </tr>
-                  ))
+                  deal.payments.map((payment) => {
+                    const interest = getPaymentInterest(payment)
+                    return (
+                      <tr key={payment.id}>
+                        <td>{payment.payment_date}</td>
+                        <td>₹{parseFloat(payment.amount).toFixed(2)}</td>
+                        <td>
+                          {interest > 0 ? (
+                            <span className="badge bg-info">₹{interest.toFixed(2)}</span>
+                          ) : (
+                            <span className="text-muted">₹0.00</span>
+                          )}
+                        </td>
+                        <td>{payment.type}</td>
+                        <td>{payment.remark || '-'}</td>
+                      </tr>
+                    )
+                  })
                 )}
               </tbody>
             </table>
@@ -305,3 +471,4 @@ function DealDetails() {
 }
 
 export default DealDetails
+

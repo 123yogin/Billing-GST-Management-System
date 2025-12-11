@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import '../styles/SearchableDropdown.css';
 
-const SearchableDropdown = ({ options, label, id, selectedVal, handleChange, placeholder }) => {
+const SearchableDropdown = ({ options, label, id, selectedVal, handleChange, placeholder, returnObject = false }) => {
     const [query, setQuery] = useState("");
     const [isOpen, setIsOpen] = useState(false);
     const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
@@ -57,6 +57,12 @@ const SearchableDropdown = ({ options, label, id, selectedVal, handleChange, pla
             !inputRef.current.contains(e.target)
         ) {
             setIsOpen(false);
+            // Reset query to selectedVal if returnObject is true (to prevent showing typed text that wasn't selected)
+            if (returnObject && selectedVal) {
+                setQuery(selectedVal);
+            } else if (returnObject && !selectedVal) {
+                setQuery('');
+            }
         }
     };
 
@@ -69,14 +75,28 @@ const SearchableDropdown = ({ options, label, id, selectedVal, handleChange, pla
     };
 
     const handleInputChange = (e) => {
-        setQuery(e.target.value);
-        handleChange(e.target.value);
+        const newValue = e.target.value;
+        setQuery(newValue);
+        // Only call handleChange with string if returnObject is false
+        // If returnObject is true, only allow selection from dropdown
+        if (!returnObject) {
+            handleChange(newValue);
+        } else {
+            // If returnObject is true and input is cleared, clear the selection
+            if (newValue === '') {
+                handleChange(null);
+            }
+        }
         setIsOpen(true);
     };
 
     const handleSelect = (option) => {
         setQuery(option.name);
-        handleChange(option.name);
+        if (returnObject) {
+            handleChange(option);
+        } else {
+            handleChange(option.name);
+        }
         setIsOpen(false);
     };
 

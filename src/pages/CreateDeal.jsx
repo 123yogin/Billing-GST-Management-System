@@ -6,12 +6,25 @@ import '../styles/BillForm.css'
 
 function CreateDeal() {
   const navigate = useNavigate()
+  
+  // Helper function to get current date in IST
+  const getISTDate = () => {
+    const now = new Date()
+    // Get date in IST timezone (Asia/Kolkata)
+    const istDate = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
+    // Format as YYYY-MM-DD
+    const year = istDate.getFullYear()
+    const month = String(istDate.getMonth() + 1).padStart(2, '0')
+    const day = String(istDate.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+  
   const [formData, setFormData] = useState({
     customer_name: '',
     dealer_id: null,
     total_amount: '',
     interest_percentage: '',
-    deal_date: new Date().toISOString().split('T')[0],
+    deal_date: getISTDate(), // Always use current IST date as default
     installments: []
   })
   const [dealersList, setDealersList] = useState([])
@@ -38,6 +51,15 @@ function CreateDeal() {
 
   useEffect(() => {
     loadDealers()
+  }, [])
+
+  // Reload dealers when returning to this page (e.g., after adding a new dealer)
+  useEffect(() => {
+    const handleFocus = () => {
+      loadDealers()
+    }
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
   }, [])
 
   // Validate when total_amount changes in fix mode
@@ -643,6 +665,11 @@ function CreateDeal() {
         throw new Error('Please fill in all required fields')
       }
 
+      // Validate that a dealer is selected (dealer_id must not be null)
+      if (!formData.dealer_id) {
+        throw new Error('Please select an existing dealer from the dropdown. Use the "+" button to add a new dealer.')
+      }
+
       // Validate total installment amount
       if (formData.installments.length > 0) {
         const totalInstallmentAmount = formData.installments.reduce((sum, inst) => sum + parseFloat(inst.amount), 0)
@@ -688,21 +715,51 @@ function CreateDeal() {
           <div className="form-row">
             <div className="form-group">
               <label>Customer Name *</label>
-              <SearchableDropdown
-                options={dealersList}
-                label="name"
-                id="customer_name"
-                selectedVal={formData.customer_name}
-                placeholder="Select or type dealer name..."
-                handleChange={(val) => {
-                  // val can be string or object
-                  if (val && typeof val === 'object') {
-                    setFormData({ ...formData, customer_name: val.name || '', dealer_id: val.id || null })
-                  } else {
-                    setFormData({ ...formData, customer_name: val, dealer_id: null })
-                  }
-                }}
-              />
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                <div style={{ flex: 1 }}>
+                  <SearchableDropdown
+                    options={dealersList}
+                    label="name"
+                    id="customer_name"
+                    selectedVal={formData.customer_name}
+                    placeholder="Search and select dealer..."
+                    returnObject={true}
+                    handleChange={(val) => {
+                      // val should be an object when selected from dropdown, or null when cleared
+                      if (val === null) {
+                        // Input was cleared
+                        setFormData({ ...formData, customer_name: '', dealer_id: null })
+                      } else if (val && typeof val === 'object' && val.id) {
+                        // Valid dealer selected from dropdown
+                        setFormData({ ...formData, customer_name: val.name || '', dealer_id: val.id || null })
+                      } else {
+                        // Invalid - clear selection
+                        setFormData({ ...formData, customer_name: '', dealer_id: null })
+                      }
+                    }}
+                  />
+                  {!formData.dealer_id && formData.customer_name && (
+                    <div style={{ color: '#dc3545', fontSize: '12px', marginTop: '4px' }}>
+                      Please select a dealer from the dropdown
+                    </div>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => navigate('/dealers/add')}
+                  style={{ 
+                    padding: '6px 12px',
+                    whiteSpace: 'nowrap',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                  title="Add New Dealer"
+                >
+                  <span>+</span>
+                </button>
+              </div>
             </div>
             <div className="form-group">
               <label>Total Amount *</label>

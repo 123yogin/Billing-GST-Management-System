@@ -173,8 +173,8 @@ function DealsList() {
                             <td>{parseFloat(deal.interest_percentage).toFixed(2)}%</td>
                             <td>₹{pending.toFixed(2)}</td>
                             <td>
-                              <span className={`badge ${deal.status === 'active' ? 'bg-success' : 'bg-secondary'}`}>
-                                {deal.status}
+                              <span className={`badge ${deal.status === 'closed' ? 'bg-success' : 'bg-primary'}`}>
+                                {deal.status === 'closed' ? 'Closed' : 'Active'}
                               </span>
                             </td>
                             <td>

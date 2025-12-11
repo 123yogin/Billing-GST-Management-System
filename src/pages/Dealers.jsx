@@ -123,6 +123,26 @@ function Dealers() {
     return deal.payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0)
   }
 
+  const calculateInterestEarned = (deal) => {
+    if (!deal.payments) return 0
+    return deal.payments.reduce((sum, payment) => {
+      if (payment.allocations && payment.allocations.length > 0) {
+        const paymentInterest = payment.allocations.reduce((allocSum, alloc) => {
+          return allocSum + parseFloat(alloc.interest_amount || 0)
+        }, 0)
+        return sum + paymentInterest
+      }
+      return sum
+    }, 0)
+  }
+
+  const getPaymentInterest = (payment) => {
+    if (!payment.allocations || payment.allocations.length === 0) return 0
+    return payment.allocations.reduce((sum, alloc) => {
+      return sum + parseFloat(alloc.interest_amount || 0)
+    }, 0)
+  }
+
   const formatPhone = (phone) => {
     if (!phone) return '-'
     return phone
@@ -471,7 +491,7 @@ function Dealers() {
               ) : (
                 <div>
                   <div className="row mb-4">
-                    <div className="col-md-4">
+                    <div className="col-md-3">
                       <div className="card">
                         <div className="card-body">
                           <h6 className="card-subtitle mb-2 text-muted">Total Deals</h6>
@@ -479,7 +499,7 @@ function Dealers() {
                         </div>
                       </div>
                     </div>
-                    <div className="col-md-4">
+                    <div className="col-md-3">
                       <div className="card">
                         <div className="card-body">
                           <h6 className="card-subtitle mb-2 text-muted">Total Amount</h6>
@@ -489,7 +509,7 @@ function Dealers() {
                         </div>
                       </div>
                     </div>
-                    <div className="col-md-4">
+                    <div className="col-md-3">
                       <div className="card">
                         <div className="card-body">
                           <h6 className="card-subtitle mb-2 text-muted">Total Pending</h6>
@@ -499,11 +519,22 @@ function Dealers() {
                         </div>
                       </div>
                     </div>
+                    <div className="col-md-3">
+                      <div className="card">
+                        <div className="card-body">
+                          <h6 className="card-subtitle mb-2 text-muted">Total Interest Earned</h6>
+                          <h4 className="card-title text-info">
+                            ₹{dealerDeals.reduce((sum, d) => sum + calculateInterestEarned(d), 0).toFixed(2)}
+                          </h4>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   {dealerDeals.map((deal) => {
                     const pending = calculateTotalPending(deal)
                     const paid = calculateTotalPaid(deal)
+                    const interestEarned = calculateInterestEarned(deal)
                     const isExpanded = expandedDeal === deal.deal_id
                     const hasFullDetails = deal.installments && deal.installments.length > 0
 
@@ -575,6 +606,16 @@ function Dealers() {
                               <div className="col-md-3">
                                 <div className="card">
                                   <div className="card-body">
+                                    <h6 className="card-subtitle mb-2 text-muted">Interest Earned</h6>
+                                    <h5 className="card-title text-info">₹{interestEarned.toFixed(2)}</h5>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="row mb-3">
+                              <div className="col-md-3">
+                                <div className="card">
+                                  <div className="card-body">
                                     <h6 className="card-subtitle mb-2 text-muted">Pending</h6>
                                     <h5 className="card-title text-warning">₹{pending.toFixed(2)}</h5>
                                   </div>
@@ -627,19 +668,30 @@ function Dealers() {
                                       <tr>
                                         <th>Date</th>
                                         <th>Amount</th>
+                                        <th>Interest Earned</th>
                                         <th>Type</th>
                                         <th>Remark</th>
                                       </tr>
                                     </thead>
                                     <tbody>
-                                      {deal.payments.map((payment) => (
-                                        <tr key={payment.id}>
-                                          <td>{payment.payment_date}</td>
-                                          <td className="text-success">₹{parseFloat(payment.amount || 0).toFixed(2)}</td>
-                                          <td>{payment.type || 'installment'}</td>
-                                          <td>{payment.remark || '-'}</td>
-                                        </tr>
-                                      ))}
+                                      {deal.payments.map((payment) => {
+                                        const paymentInterest = getPaymentInterest(payment)
+                                        return (
+                                          <tr key={payment.id}>
+                                            <td>{payment.payment_date}</td>
+                                            <td className="text-success">₹{parseFloat(payment.amount || 0).toFixed(2)}</td>
+                                            <td>
+                                              {paymentInterest > 0 ? (
+                                                <span className="badge bg-info">₹{paymentInterest.toFixed(2)}</span>
+                                              ) : (
+                                                <span className="text-muted">₹0.00</span>
+                                              )}
+                                            </td>
+                                            <td>{payment.type || 'installment'}</td>
+                                            <td>{payment.remark || '-'}</td>
+                                          </tr>
+                                        )
+                                      })}
                                     </tbody>
                                   </table>
                                 </div>

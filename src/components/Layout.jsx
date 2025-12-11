@@ -84,22 +84,6 @@ function Layout({ children }) {
             </button>
             <h1 className="header-title">{getPageTitle()}</h1>
           </div>
-
-          <div className="header-actions">
-            <button className="header-icon-btn" title="Notifications">
-              🔔
-            </button>
-            <button className="header-icon-btn" title="Settings">
-              ⚙️
-            </button>
-            <div className="user-info">
-              <div className="user-details">
-                <p className="user-name">Admin</p>
-                <p className="user-role">Administrator</p>
-              </div>
-              <div className="user-avatar">A</div>
-            </div>
-          </div>
         </header>
 
         {/* Page Content */}
