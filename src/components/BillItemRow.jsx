@@ -17,6 +17,21 @@ function BillItemRow({ item, index, onUpdate, onDelete, itemsList }) {
 
   const handleChange = (field, value) => {
     const updatedItem = { ...item, [field]: value }
+    
+    // Auto-calculate મણ (weight) when ટન (quantity_bags) is entered
+    // 1 ટન = 50 મણ
+    if (field === 'quantity_bags') {
+      const tonValue = parseFloat(value) || 0
+      updatedItem.weight = tonValue * 50
+    }
+    
+    // Auto-calculate ટન (quantity_bags) when મણ (weight) is entered
+    // 1 મણ = 1/50 ટન, so ટન = મણ / 50
+    if (field === 'weight') {
+      const manValue = parseFloat(value) || 0
+      updatedItem.quantity_bags = manValue / 50
+    }
+    
     onUpdate(index, updatedItem)
   }
 
