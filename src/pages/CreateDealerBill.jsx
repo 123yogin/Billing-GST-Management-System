@@ -364,12 +364,12 @@ function CreateDealerBill() {
                 <thead className="table-light">
                   <tr>
                     <th>Name of Goods / Service</th>
-                    <th style={{ width: '100px' }}>HSN Code</th>
-                    <th style={{ width: '80px' }}>Bags</th>
-                    <th style={{ width: '100px' }}>Net Kg.</th>
-                    <th style={{ width: '100px' }}>Rate</th>
+                    <th style={{ width: '150px' }}>HSN Code</th>
+                    <th style={{ width: '120px' }}>ટન</th>
+                    <th style={{ width: '150px' }}>મણ</th>
+                    <th style={{ width: '130px' }}>ભાવ/મણ</th>
                     <th className="text-end" style={{ width: '120px' }}>Amount</th>
-                    <th style={{ width: '50px' }}></th>
+                    <th style={{ width: '80px' }}></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -378,9 +378,9 @@ function CreateDealerBill() {
                       key={index}
                       item={item}
                       index={index}
+                      itemsList={itemsList}
                       onUpdate={handleItemUpdate}
                       onDelete={handleDeleteItem}
-                      itemsList={itemsList}
                     />
                   ))}
                 </tbody>
