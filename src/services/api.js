@@ -28,6 +28,12 @@ export const downloadFarmerExcel = (params) =>
   api.get('/reports/farmer/excel', { params, responseType: 'blob' })
 export const downloadDealerExcel = (params) =>
   api.get('/reports/dealer/excel', { params, responseType: 'blob' })
+export const getDailyLedger = (params) =>
+  api.get('/reports/daily-ledger', { params })
+export const getAvailableDates = (params) =>
+  api.get('/reports/date-range', { params })
+export const getBillsReport = (params) =>
+  api.get('/reports/bills', { params })
 
 // Deals (Interest Calculation)
 export const createDeal = (data) => api.post('/deals', data)

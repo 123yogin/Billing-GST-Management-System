@@ -1,136 +1,251 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { downloadDealerExcel, downloadFarmerExcel } from '../services/api'
+import axios from 'axios'
 import '../styles/Reports.css'
+
+const API_URL = 'http://localhost:5000/api'
 
 function Reports() {
   const navigate = useNavigate()
-  const [month, setMonth] = useState(new Date().getMonth() + 1)
-  const [year, setYear] = useState(new Date().getFullYear())
-  const [loading, setLoading] = useState({ farmer: false, dealer: false })
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
+  const [reportData, setReportData] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [activeTab, setActiveTab] = useState('farmer')
 
-  const handleDownloadFarmerExcel = async () => {
-    setLoading({ ...loading, farmer: true })
+  useEffect(() => {
+    // Set default dates (current month)
+    const today = new Date()
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1)
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+    
+    setFromDate(firstDay.toISOString().split('T')[0])
+    setToDate(lastDay.toISOString().split('T')[0])
+  }, [])
+
+  useEffect(() => {
+    if (fromDate && toDate) {
+      fetchReportData()
+    }
+  }, [fromDate, toDate])
+
+  const fetchReportData = async () => {
+    if (!fromDate || !toDate) return
+
+    if (new Date(fromDate) > new Date(toDate)) {
+      setError('From date cannot be after To date')
+      return
+    }
+
+    setLoading(true)
+    setError('')
     try {
-      const response = await downloadFarmerExcel({ month, year })
-      const url = window.URL.createObjectURL(new Blob([response.data]))
-      const link = document.createElement('a')
-      link.href = url
-      link.setAttribute('download', `farmer_bills_${month}_${year}.xlsx`)
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      alert('Excel file downloaded successfully!')
-    } catch (error) {
-      alert('Error downloading Excel: ' + (error.response?.data?.error || error.message))
+      const response = await axios.get(`${API_URL}/reports/bills`, {
+        params: { from_date: fromDate, to_date: toDate }
+      })
+      setReportData(response.data)
+    } catch (err) {
+      setError('Error fetching report data: ' + (err.response?.data?.error || err.message))
+      setReportData(null)
     } finally {
-      setLoading({ ...loading, farmer: false })
+      setLoading(false)
     }
   }
 
-  const handleDownloadDealerExcel = async () => {
-    setLoading({ ...loading, dealer: true })
-    try {
-      const response = await downloadDealerExcel({ month, year })
-      const url = window.URL.createObjectURL(new Blob([response.data]))
-      const link = document.createElement('a')
-      link.href = url
-      link.setAttribute('download', `dealer_bills_${month}_${year}.xlsx`)
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      alert('Excel file downloaded successfully!')
-    } catch (error) {
-      alert('Error downloading Excel: ' + (error.response?.data?.error || error.message))
-    } finally {
-      setLoading({ ...loading, dealer: false })
-    }
+  const formatDate = (dateStr) => {
+    const date = new Date(dateStr)
+    return date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  }
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 2
+    }).format(amount)
   }
 
   return (
     <div className="reports-page">
       <div className="page-header">
         <h1>Reports</h1>
-        <p>Download monthly reports in Excel format</p>
+        <p>View bills data for selected date range</p>
       </div>
 
-      <div className="reports-grid">
-        <div className="card">
-          <div className="card-header">
-            <h3>Monthly Reports</h3>
+      <div className="date-filter-section">
+        <div className="date-selectors-row">
+          <div className="form-group">
+            <label className="form-label">From Date</label>
+            <input
+              type="date"
+              className="form-control"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+            />
           </div>
-          <div className="card-body">
-            <div className="date-selectors">
-              <div className="form-group">
-                <label className="form-label">Month</label>
-                <select
-                  className="form-control"
-                  value={month}
-                  onChange={(e) => setMonth(parseInt(e.target.value))}
-                >
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                    <option key={m} value={m}>
-                      {new Date(2000, m - 1).toLocaleString('default', { month: 'long' })}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Year</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  value={year}
-                  onChange={(e) => setYear(parseInt(e.target.value))}
-                  min="2000"
-                  max="2100"
-                />
-              </div>
-            </div>
-
-            <div className="download-buttons">
-              <button
-                className="btn btn-primary"
-                onClick={handleDownloadFarmerExcel}
-                disabled={loading.farmer}
-              >
-                {loading.farmer ? 'Downloading...' : 'Download Farmer Bills Excel'}
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={handleDownloadDealerExcel}
-                disabled={loading.dealer}
-              >
-                {loading.dealer ? 'Downloading...' : 'Download Dealer Bills Excel (GST)'}
-              </button>
-            </div>
+          <div className="form-group">
+            <label className="form-label">To Date</label>
+            <input
+              type="date"
+              className="form-control"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+            />
           </div>
-        </div>
-
-        <div className="card">
-          <div className="card-header">
-            <h3>Report Information</h3>
-          </div>
-          <div className="card-body">
-            <p>
-              Select a month and year to download the corresponding bills in Excel format.
-            </p>
-            <ul className="info-list">
-              <li>
-                <strong>Farmer Bills:</strong> Contains all farmer bills with item details, expenses, and totals.
-              </li>
-              <li>
-                <strong>Dealer Bills:</strong> Contains all dealer bills with GST calculations, CGST, SGST, and grand totals.
-              </li>
-            </ul>
-            <div className="info-box">
-              <p>
-                The Excel files include all bills from the selected month and year, with detailed item-wise breakdown.
-              </p>
-            </div>
-          </div>
+          <button
+            className="btn btn-secondary"
+            onClick={() => navigate(`/daily-ledger?from=${fromDate}&to=${toDate}`)}
+          >
+            Daily Ledger View
+          </button>
         </div>
       </div>
+
+      {error && (
+        <div className="alert alert-error">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="loading-container">
+          <p>Loading report data...</p>
+        </div>
+      ) : reportData ? (
+        <>
+          <div className="tabs-container">
+            <button
+              className={`tab-btn ${activeTab === 'farmer' ? 'active' : ''}`}
+              onClick={() => setActiveTab('farmer')}
+            >
+              Farmer Bills ({reportData.farmer_bills.length})
+            </button>
+            <button
+              className={`tab-btn ${activeTab === 'dealer' ? 'active' : ''}`}
+              onClick={() => setActiveTab('dealer')}
+            >
+              Dealer Bills ({reportData.dealer_bills.length})
+            </button>
+          </div>
+
+          {activeTab === 'farmer' && (
+            <div className="report-section">
+              <div className="section-header">
+                <h2>Farmer Bills</h2>
+                <div className="total-badge">
+                  Total: {formatCurrency(reportData.farmer_total)}
+                </div>
+              </div>
+              {reportData.farmer_bills.length > 0 ? (
+                <div className="table-container">
+                  <table className="report-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Bill ID</th>
+                        <th>Customer Name</th>
+                        <th>Items</th>
+                        <th>Other Expense</th>
+                        <th>Discount</th>
+                        <th className="text-right">Final Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reportData.farmer_bills.map((bill) => (
+                        <tr key={bill.id}>
+                          <td>{formatDate(bill.date)}</td>
+                          <td className="bill-id-cell">{bill.bill_id}</td>
+                          <td>{bill.customer_name}</td>
+                          <td>
+                            <div className="items-list">
+                              {bill.items.map((item, idx) => (
+                                <div key={idx} className="item-detail">
+                                  {item.item} - {item.weight}kg × ₹{item.price}
+                                </div>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="text-right">{formatCurrency(bill.other_expense)}</td>
+                          <td className="text-right">{formatCurrency(bill.discount)}</td>
+                          <td className="text-right amount-cell">{formatCurrency(bill.final_total)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="total-row">
+                        <td colSpan="6" className="text-right"><strong>Grand Total:</strong></td>
+                        <td className="text-right"><strong>{formatCurrency(reportData.farmer_total)}</strong></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              ) : (
+                <div className="no-data">No farmer bills found for the selected date range</div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'dealer' && (
+            <div className="report-section">
+              <div className="section-header">
+                <h2>Dealer Bills</h2>
+                <div className="total-badge dealer">
+                  Total: {formatCurrency(reportData.dealer_total)}
+                </div>
+              </div>
+              {reportData.dealer_bills.length > 0 ? (
+                <div className="table-container">
+                  <table className="report-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Bill ID</th>
+                        <th>Customer Name</th>
+                        <th>Items</th>
+                        <th>GST %</th>
+                        <th>CGST</th>
+                        <th>SGST</th>
+                        <th className="text-right">Grand Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reportData.dealer_bills.map((bill) => (
+                        <tr key={bill.id}>
+                          <td>{formatDate(bill.date)}</td>
+                          <td className="bill-id-cell">{bill.bill_id}</td>
+                          <td>{bill.customer_name}</td>
+                          <td>
+                            <div className="items-list">
+                              {bill.items.map((item, idx) => (
+                                <div key={idx} className="item-detail">
+                                  {item.item} - {item.weight}kg × ₹{item.price}
+                                </div>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="text-center">{bill.gst_percentage}%</td>
+                          <td className="text-right">{formatCurrency(bill.cgst)}</td>
+                          <td className="text-right">{formatCurrency(bill.sgst)}</td>
+                          <td className="text-right amount-cell">{formatCurrency(bill.grand_total)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="total-row">
+                        <td colSpan="7" className="text-right"><strong>Grand Total:</strong></td>
+                        <td className="text-right"><strong>{formatCurrency(reportData.dealer_total)}</strong></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              ) : (
+                <div className="no-data">No dealer bills found for the selected date range</div>
+              )}
+            </div>
+          )}
+        </>
+      ) : null}
     </div>
   )
 }

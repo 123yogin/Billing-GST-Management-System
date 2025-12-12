@@ -5,6 +5,7 @@ import BillsList from './pages/BillsList'
 import CreateDeal from './pages/CreateDeal'
 import CreateDealerBill from './pages/CreateDealerBill'
 import CreateFarmerBill from './pages/CreateFarmerBill'
+import DailyLedger from './pages/DailyLedger'
 import Dashboard from './pages/Dashboard'
 import DealDetails from './pages/DealDetails'
 import Dealers from './pages/Dealers'
@@ -27,6 +28,7 @@ function App() {
           <Route path="/dealer-bill/create" element={<CreateDealerBill />} />
           <Route path="/bills" element={<BillsList />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/daily-ledger" element={<DailyLedger />} />
           <Route path="/bill/farmer/:id/print" element={<PrintFarmerBill />} />
           <Route path="/bill/dealer/:id/print" element={<PrintDealerBill />} />
           <Route path="/deal/create" element={<CreateDeal />} />
